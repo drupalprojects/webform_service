@@ -121,7 +121,7 @@ function webform_service_delete($sid) {
  * @return
  *   Boolean. TRUE if the user has view access.
  */
-function webform_service_list_access($fromdate) {
+function webform_service_list_access() {
   global $user;
   return user_access('access all webform results');
 }
@@ -135,7 +135,7 @@ function webform_service_list_access($fromdate) {
  * @return
  *   Boolean. TRUE if the user has view access.
  */
-function webform_service_get_access($fromdate) {
+function webform_service_get_access($nid, $fromdate) {
   global $user;
   return user_access('access all webform results');
 }
