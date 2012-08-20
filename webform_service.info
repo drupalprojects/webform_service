@@ -1,0 +1,7 @@
+name = Webform Service
+description = Provides services for the Webform module
+package = Services
+dependencies[] = services
+dependencies[] = webform
+dependencies[] = ctools
+core = 7.x

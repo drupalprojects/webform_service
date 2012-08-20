@@ -1,0 +1,188 @@
+<?php
+
+// Include the feature file.
+include_once('webform_service.features.inc');
+
+/*
+ * Implements hook_services_resources().
+ */
+function webform_service_services_resources() {
+
+  // Include our resources.
+  require_once("resources/webform_resource.inc");
+  require_once("resources/submission_resource.inc");
+
+  // Add the resources.
+  $resources = array();
+  $resources += _webform_resource_definition();
+  $resources += _submission_resource_definition();
+  return $resources;
+}
+
+/**
+ * Determine whether the current user can access a node resource.
+ *
+ * @param $op
+ *   One of view, update, create, delete per node_access().
+ * @param $args
+ *   Resource arguments passed through from the original request.
+ * @param $load_node
+ *   Function that loads the node.
+ *
+ * @return bool
+ *
+ * @see node_access()
+ */
+function webform_service_resource_access($op = 'view', $args = array()) {
+  $node = null;
+  $uuid = '';
+
+  // Make sure the uuid is valid.
+  if (empty($args[0])) {
+    return services_error(t('Must provide a uuid.'), 404);
+  }
+  else if (gettype($args[0]) !== 'string'){
+    return services_error(t('UUID must be a string.'), 404);
+  }
+  else {
+    $uuid = $args[0];
+  }
+
+  // Load the node.
+  if ($node = webform_service_resource_load($uuid)) {
+    return node_access($op, $node);
+  }
+  else {
+    return services_error(t('@uuid could not be found', array('@uuid' => $args[0]->uuid)), 404);
+  }
+}
+
+/**
+ * Get the field value provided the entity and field name.
+ *
+ * @param type $entity
+ * @param type $field_name
+ * @param type $value_name
+ * @return string
+ */
+function webform_service_field_value($entity, $field_name, $value_name = 'value') {
+  $items = field_get_items('node', $entity, $field_name);
+  if (isset($items[0])) {
+    if (isset($items[0][$value_name])) {
+      return $items[0][$value_name];
+    }
+    else {
+      return $items[0];
+    }
+  }
+  return '';
+}
+
+/**
+ * Returns a single media resource.
+ *
+ * @param $entity
+ *   UUID or the whole object of the media we want to return.
+ * @return
+ *   Node object or FALSE if not found.
+ *
+ * @see node_load()
+ */
+function webform_service_get_resource($entity) {
+  $resource = array();
+  if (gettype($entity) === 'string') {
+    $entity = webform_service_resource_load($entity);
+  }
+  if ($entity && $entity->type === 'media') {
+    $desc = webform_service_field_value($entity, 'body');
+    $resource = array(
+      'uri' => services_resource_uri(array('webform', $entity->uuid)),
+      'uuid' => $entity->uuid,
+      'title' => $entity->title,
+      'description' => $desc,
+      'created' => $entity->created,
+      'updated' => $entity->changed
+    );
+
+    // If UUID is present, use it, if not, use node ID.
+    if (!empty($entity->uuid)) {
+      $resource['uuid'] = $entity->uuid;
+    }
+    else {
+      $resource['id'] = $entity->nid;
+    }
+  }
+
+  // Return the resource.
+  return $resource;
+}
+
+/**
+ * Return an array of optionally paged nids based on a set of criteria.
+ *
+ * @param array $params
+ *   - $page (int) Page number of results to return (in pages of 20).
+ *   - $search (string  A keyword being searched for.
+ *   - $page_size (int) The number of items to be returned.
+ * @param $function
+ *   The function (as a string) called to get the index we want.
+ * @param $query
+ *   The entity field query.
+ *
+ * @return
+ *   An array of node objects.
+ */
+function webform_service_resource_index($type, $result) {
+  $items = array();
+  $entities = entity_load('node', array_keys($result['node']));
+  foreach ($entities as $entity) {
+    $item = webform_service_get_resource($entity);
+    if ($item) {
+      $items[] = $item;
+    }
+  }
+  return $items;
+}
+
+/**
+ * Load a resource provided its uuid.  Much like node_load, but with uuid's...
+ *
+ * @param type $uuid
+ * @return type
+ */
+function webform_service_resource_load($uuid) {
+  return reset(entity_uuid_load('node', array($uuid)));
+}
+
+/**
+ * Delete a node given its nid.
+ *
+ * @param $nid
+ *   Node ID of the node we're deleting.
+ * @return
+ *   The node's nid.
+ */
+function webform_service_resource_delete($uuid) {
+  if ($node = webform_service_resource_load($uuid)) {
+    node_delete($node->nid);
+  }
+  return TRUE;
+}
+
+/**
+ * The number of objects to return.
+ *
+ * @param int $page_size
+ */
+function webform_service_validate_parameters(&$page_size) {
+
+  // Setting the default limit for the number of objects we would like to allow
+  // to be returned on a single page.
+  $default_pagesize = variable_get("services_node_index_page_size", 20);
+
+  // If the user doesn't have access to make unlimited queries and the page size
+  // request is over the default then reset the page size to the default limit.
+  if (!user_access('perform unlimited index queries') && $page_size > $default_pagesize) {
+    $page_size = $default_pagesize;
+  }
+}
