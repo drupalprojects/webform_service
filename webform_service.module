@@ -93,7 +93,7 @@ function webform_service_get_resource($entity) {
   if (gettype($entity) === 'string') {
     $entity = webform_service_resource_load($entity);
   }
-  if ($entity && $entity->type === 'media') {
+  if ($entity) {
     $desc = webform_service_field_value($entity, 'body');
     $resource = array(
       'uri' => services_resource_uri(array('webform', $entity->uuid)),
