@@ -1,8 +1,5 @@
 <?php
 
-// Include the feature file.
-include_once('webform_service.features.inc');
-
 /*
  * Implements hook_services_resources().
  */
@@ -95,21 +92,13 @@ function webform_service_get_resource($entity) {
   }
   if ($entity) {
     $resource = array(
+      'uri' => services_resource_uri(array('webform', $entity->uuid)),
+      'uuid' => $entity->uuid,
       'title' => $entity->title,
       'description' => webform_service_field_value($entity, 'body'),
       'created' => $entity->created,
       'updated' => $entity->changed
     );
-
-    // If UUID is present, use it, if not, use node ID.
-    if (!empty($entity->uuid)) {
-      $resource['uri'] = services_resource_uri(array('webform', $entity->uuid));
-      $resource['uuid'] = $entity->uuid;
-    }
-    else {
-      $resource['uri'] = services_resource_uri(array('webform', $entity->nid));
-      $resource['id'] = $entity->nid;
-    }
   }
 
   // Return the resource.

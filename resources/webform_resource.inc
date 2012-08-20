@@ -100,12 +100,12 @@ function _webform_resource_definition() {
           'source' => array('param' => 'pagesize'),
         ),
         array(
-          'name' => 'search',
+          'name' => 'type',
           'optional' => TRUE,
           'type' => 'string',
-          'description' => 'Search query',
+          'description' => 'Webform Type',
           'default value' => '',
-          'source' => array('param' => 'search'),
+          'source' => array('param' => 'type'),
         ),
         'access arguments' => array('access content'),
       ),// index
@@ -216,18 +216,25 @@ function _webform_resource_update($uuid, $node) {
  *     - Is there an easier syntax we can define which can make the urls
  *       for index requests more straightforward?
  */
-function _webform_resource_index($page, $page_size) {
+function _webform_resource_index($page, $page_size, $type) {
 
-  // Setting the limit for media objects returned.
+  // Get the webform types they wish to include.
+  $webform_types = $type ? array($type) : webform_variable_get('webform_node_types');
+
+  // Validate the page_size parameter.
   webform_service_validate_parameters($page_size);
+
+  // Get the query.
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'media')
+    ->entityCondition('bundle', $webform_types, 'IN')
     ->propertyCondition('status', 1)
     ->propertyOrderBy('created', 'DESC')
     ->range($page * $page_size, $page_size)
     ->execute();
-  $resource = webform_service_resource_index('webform', $result);
+
+  // Pass this along to our resource index parser.
+  return webform_service_resource_index('webform', $result);
 }
 
 /**
