@@ -24,7 +24,7 @@ function _webform_resource_definition() {
         'access arguments append' => TRUE,
       ),
       'create' => array(
-        'file' => array('type' => 'inc', 'module' => 'truli_services', 'name' => 'resources/webform_resource'),
+        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
         'callback' => '_webform_resource_create',
         'args' => array(
           array(
@@ -41,7 +41,7 @@ function _webform_resource_definition() {
         'access arguments append' => TRUE,
       ),// create
       'update' => array(
-        'file' => array('type' => 'inc', 'module' => 'truli_services', 'name' => 'resources/webform_resource'),
+        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
         'callback' => '_webform_resource_update',
         'args' => array(
           array(
