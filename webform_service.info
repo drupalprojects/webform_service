@@ -4,4 +4,5 @@ package = Services
 dependencies[] = services
 dependencies[] = webform
 dependencies[] = ctools
+dependencies[] = uuid
 core = 7.x
