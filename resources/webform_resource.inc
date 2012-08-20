@@ -1,11 +1,11 @@
 <?php
 /**
- * The media resource definition.
+ * The webform resource definition.
  *
  * @return array
  */
 
-function _media_resource_definition() {
+function _webform_resource_definition() {
   return array(
     'webform' => array(
       'retrieve' => array(
