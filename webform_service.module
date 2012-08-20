@@ -94,21 +94,20 @@ function webform_service_get_resource($entity) {
     $entity = webform_service_resource_load($entity);
   }
   if ($entity) {
-    $desc = webform_service_field_value($entity, 'body');
     $resource = array(
-      'uri' => services_resource_uri(array('webform', $entity->uuid)),
-      'uuid' => $entity->uuid,
       'title' => $entity->title,
-      'description' => $desc,
+      'description' => webform_service_field_value($entity, 'body'),
       'created' => $entity->created,
       'updated' => $entity->changed
     );
 
     // If UUID is present, use it, if not, use node ID.
     if (!empty($entity->uuid)) {
+      $resource['uri'] = services_resource_uri(array('webform', $entity->uuid));
       $resource['uuid'] = $entity->uuid;
     }
     else {
+      $resource['uri'] = services_resource_uri(array('webform', $entity->nid));
       $resource['id'] = $entity->nid;
     }
   }

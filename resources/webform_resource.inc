@@ -224,7 +224,6 @@ function _webform_resource_index($page, $page_size) {
   $result = $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'media')
     ->propertyCondition('status', 1)
-    ->fieldCondition('field_limelight_state', 'value', 'Published')
     ->propertyOrderBy('created', 'DESC')
     ->range($page * $page_size, $page_size)
     ->execute();
