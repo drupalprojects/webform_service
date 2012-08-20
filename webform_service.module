@@ -76,6 +76,49 @@ function webform_service_field_value($entity, $field_name, $value_name = 'value'
 }
 
 /**
+ * Returns a mapping of component types to services type.
+ */
+function webform_service_get_type($field_type) {
+  switch ($field_type) {
+    case 'textfield':
+    case 'textarea':
+      return 'string';
+    case 'numberfield':
+      return 'number';
+    default:
+      return 'string';
+  }
+}
+
+/**
+ * Returns the data structure for webform components.
+ */
+function webform_service_get_components($webform) {
+  $components = array();
+  foreach ($webform['components'] as $component) {
+    $components[] = array(
+      'id' => $component['form_key'],
+      'name' => $component['name'],
+      'type' => webform_service_get_type($component['type']),
+    );
+  }
+  return $components;
+}
+
+/**
+ * Returns a data structure of a webform object.
+ */
+function webform_service_get_webform($entity) {
+  $webform = array();
+  if (isset($entity->webform)) {
+    $webform = array(
+      'components' => webform_service_get_components($entity->webform)
+    );
+  }
+  return $webform;
+}
+
+/**
  * Returns a single media resource.
  *
  * @param $entity
@@ -97,7 +140,8 @@ function webform_service_get_resource($entity) {
       'title' => $entity->title,
       'description' => webform_service_field_value($entity, 'body'),
       'created' => $entity->created,
-      'updated' => $entity->changed
+      'updated' => $entity->changed,
+      'webform' => webform_service_get_webform($entity),
     );
   }
 
