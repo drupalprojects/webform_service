@@ -50,7 +50,7 @@ function webform_service_resource_access($op = 'view', $args = array()) {
     return node_access($op, $node);
   }
   else {
-    return services_error(t('@uuid could not be found', array('@uuid' => $args[0]->uuid)), 404);
+    return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);
   }
 }
 
