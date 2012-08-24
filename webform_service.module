@@ -144,6 +144,7 @@ function webform_service_get_resource($entity) {
     $entity = webform_service_resource_load($entity);
   }
   if ($entity) {
+    $uri = services_resource_uri(array('webform', $entity->uuid));
     $resource = array(
       'uri' => services_resource_uri(array('webform', $entity->uuid)),
       'uuid' => $entity->uuid,
@@ -151,6 +152,7 @@ function webform_service_get_resource($entity) {
       'description' => webform_service_field_value($entity, 'body'),
       'created' => $entity->created,
       'updated' => $entity->changed,
+      'submissions' => $uri . '/submissions',
       'webform' => webform_service_get_webform($entity),
     );
   }
