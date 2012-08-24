@@ -6,8 +6,18 @@
  */
 
 function _webform_resource_definition() {
-  return array(
-    'webform' => array(
+
+  // Define the resources.
+  $resources = array();
+
+  // Get all the webform types.
+  $types = webform_variable_get('webform_node_types');
+
+  // Iterate through the webform types.
+  foreach ($types as $type) {
+
+    // Add the resource type.
+    $resources[$type] = array(
       'retrieve' => array(
         'callback' => 'webform_service_get_resource',
         'args' => array(
@@ -25,7 +35,7 @@ function _webform_resource_definition() {
       ),
       'create' => array(
         'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'callback' => '_webform_resource_create',
+        'callback' => 'webform_service_resource_create',
         'args' => array(
           array(
             'name' => 'webform',
@@ -35,6 +45,14 @@ function _webform_resource_definition() {
             'type' => 'array',
             'default value' => array(),
           ),
+          array(
+            'name' => 'type',
+            'optional' => TRUE,
+            'type' => 'string',
+            'description' => 'Webform Type',
+            'default value' => $type,
+            'source' => array('param' => 'type'),
+          ),
          ),// args
         'access callback' => 'webform_service_resource_access',
         'access arguments' => array('create'),
@@ -42,7 +60,7 @@ function _webform_resource_definition() {
       ),// create
       'update' => array(
         'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'callback' => '_webform_resource_update',
+        'callback' => 'webform_service_resource_update',
         'args' => array(
           array(
             'name' => 'uuid',
@@ -64,6 +82,7 @@ function _webform_resource_definition() {
         'access arguments append' => TRUE,
       ),
       'delete' => array(
+        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
         'callback' => 'webform_service_resource_delete',
         'args' => array(
           array(
@@ -105,7 +124,7 @@ function _webform_resource_definition() {
             'optional' => TRUE,
             'type' => 'string',
             'description' => 'Webform Type',
-            'default value' => '',
+            'default value' => $type,
             'source' => array('param' => 'type'),
           ),
         ),
@@ -145,8 +164,11 @@ function _webform_resource_definition() {
           'access arguments' => array('access content'),
         ),// submissions
       ),// relationships
-    ),
-  );
+    );
+  }
+
+  // Return the resources.
+  return $resources;
 }
 
 /**
@@ -164,20 +186,21 @@ function _webform_resource_definition() {
  *
  * @see drupal_execute()
  */
-function _webform_resource_create($webform) {
-  // @todo:  Build this out...
-  return $node;
+function webform_service_resource_create($webform, $type) {
+  module_load_include('inc', 'services', 'resources/node_resource');
+  $webform->type = $type;
+  return _node_resource_create($webform);
 }
 
 /**
- * Updates a new node based on submitted values.
+ * Updates a new webform based on submitted values.
  *
  * Note that this function uses drupal_execute() to create new nodes,
  * which may require very specific formatting. The full implications of this
  * are beyond the scope of this comment block. The Googles are your friend.
  *
- * @param $nid
- *   Node ID of the node we're editing.
+ * @param $uuid
+ *   UUID of the webform we're editing.
  * @param $node
  *   Array representing the attributes a node edit form would submit.
  * @return
@@ -185,9 +208,32 @@ function _webform_resource_create($webform) {
  *
  * @see drupal_execute()
  */
-function _webform_resource_update($uuid, $node) {
-  // @todo: Build this out.
-  return NULL;
+function webform_service_resource_update($uuid, $webform) {
+  if ($node = webform_service_resource_load($uuid)) {
+    module_load_include('inc', 'services', 'resources/node_resource');
+    return _node_resource_create($node->nid, $webform);
+  }
+  else {
+    return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);
+  }
+}
+
+/**
+ * Delete a node given its nid.
+ *
+ * @param $nid
+ *   Node ID of the node we're deleting.
+ * @return
+ *   The node's nid.
+ */
+function webform_service_resource_delete($uuid) {
+  if ($node = webform_service_resource_load($uuid)) {
+    node_delete($node->nid);
+    return TRUE;
+  }
+  else {
+    return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);
+  }
 }
 
 /**
@@ -220,16 +266,13 @@ function _webform_resource_update($uuid, $node) {
  */
 function _webform_resource_index($page, $page_size, $type) {
 
-  // Get the webform types they wish to include.
-  $webform_types = $type ? array($type) : webform_variable_get('webform_node_types');
-
   // Validate the page_size parameter.
   webform_service_validate_parameters($page_size);
 
   // Get the query.
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', $webform_types, 'IN')
+    ->entityCondition('bundle', $type)
     ->propertyCondition('status', 1)
     ->propertyOrderBy('created', 'DESC')
     ->range($page * $page_size, $page_size)

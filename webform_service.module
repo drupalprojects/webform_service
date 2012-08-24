@@ -17,6 +17,15 @@ function webform_service_services_resources() {
 }
 
 /**
+ * Determine whether the current user has access to a submission.
+ */
+function webform_service_submission_access($op = 'view', $args = array()) {
+
+  // @todo: Fix the submission access...
+  return TRUE;
+}
+
+/**
  * Determine whether the current user can access a node resource.
  *
  * @param $op
@@ -183,22 +192,11 @@ function webform_service_resource_index($type, $result) {
  * @return type
  */
 function webform_service_resource_load($uuid) {
-  return reset(entity_uuid_load('node', array($uuid)));
-}
-
-/**
- * Delete a node given its nid.
- *
- * @param $nid
- *   Node ID of the node we're deleting.
- * @return
- *   The node's nid.
- */
-function webform_service_resource_delete($uuid) {
-  if ($node = webform_service_resource_load($uuid)) {
-    node_delete($node->nid);
+  $webforms = &drupal_static(__FUNCTION__);
+  if (empty($webforms[$uuid])) {
+    $webforms[$uuid] = reset(entity_uuid_load('node', array($uuid)));
   }
-  return TRUE;
+  return $webforms[$uuid];
 }
 
 /**
