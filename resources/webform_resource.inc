@@ -135,7 +135,7 @@ function _webform_resource_definition() {
         'submissions' => array(
           'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
           'help' => t('Retrieve the submissions provided a webform.'),
-          'callback' => '_webform_resource_submissions',
+          'callback' => 'webform_service_submission_index',
           'args' => array(
             array(
               'name' => 'uuid',
@@ -280,11 +280,4 @@ function _webform_resource_index($page, $page_size, $type) {
 
   // Pass this along to our resource index parser.
   return webform_service_resource_index('webform', $result);
-}
-
-/**
- * Retrieve all submissions for a webform.
- */
-function _webform_resource_submissions($uuid, $page, $page_size) {
-  // @todo: Build this out.
 }

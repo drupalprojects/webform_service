@@ -106,6 +106,7 @@ function webform_service_get_components($webform) {
   $components = array();
   foreach ($webform['components'] as $component) {
     $components[] = array(
+      'cid' => $component['cid'],
       'id' => $component['form_key'],
       'name' => $component['name'],
       'type' => webform_service_get_type($component['type']),
@@ -156,6 +157,66 @@ function webform_service_get_resource($entity) {
 
   // Return the resource.
   return $resource;
+}
+
+/**
+ * Returns a single submission resource.
+ */
+function webform_service_get_submission($webform, $submission) {
+  $ret = array();
+  if ($submission) {
+
+    // Get the components and establish the values.
+    $components = webform_service_get_components($webform->webform);
+    $values = array();
+    foreach ($components as $component) {
+      foreach ($submission->data[$component['cid']] as $index => $value) {
+        $values[] = array(
+          'id' => $component['id'],
+          'value' => $submission->data[$component['cid']][$index],
+          'index' => $index
+        );
+      }
+    }
+
+    // Load the user account.
+    $account = user_load($submission->uid);
+
+    // The return for this submission.
+    $ret = array(
+      'sid' => $submission->sid,
+      'uri' => services_resource_uri(array('webform', $webform->uuid)) . '/' . $submission->sid,
+      'webform' => services_resource_uri(array('webform', $webform->uuid)),
+      'user' => $account->uuid,
+      'submitted' => $submission->submitted,
+      'data' => $values
+    );
+  }
+  return $ret;
+}
+
+/**
+ * Retrieve all submissions for a webform.
+ */
+function webform_service_submission_index($uuid, $page, $page_size) {
+  if ($webform = webform_service_resource_load($uuid)) {
+
+    // Establish the index.
+    $index = array();
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+    $submissions = webform_get_submissions(array('nid' => $webform->nid));
+
+    // Iterate through each submission and get the submission.
+    foreach ($submissions as $submission) {
+      $index[] = webform_service_get_submission($webform, $submission);
+    }
+    return $index;
+  }
+  else {
+
+    // Return a 404.
+    return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);
+  }
 }
 
 /**
