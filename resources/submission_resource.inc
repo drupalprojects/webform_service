@@ -7,111 +7,113 @@
 function _submission_resource_definition() {
   return array(
     'submission' => array(
-      'retrieve' => array(
-        'callback' => 'webform_service_get_submission',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the webform to get',
+      'operations' => array(
+        'retrieve' => array(
+          'callback' => 'webform_service_get_submission',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the webform to get',
+            ),
+            array(
+              'name' => 'sid',
+              'optional' => FALSE,
+              'source' => array('path' => 1),
+              'type' => 'int',
+              'description' => 'The submission ID within this webform',
+            ),
           ),
-          array(
-            'name' => 'sid',
-            'optional' => FALSE,
-            'source' => array('path' => 1),
-            'type' => 'int',
-            'description' => 'The submission ID within this webform',
-          ),
+          'access callback' => 'webform_service_submission_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
         ),
-        'access callback' => 'webform_service_submission_access',
-        'access arguments' => array('view'),
-        'access arguments append' => TRUE,
-      ),
-      'create' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
-        'callback' => 'webform_service_submission_create',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the webform.',
+        'create' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
+          'callback' => 'webform_service_submission_create',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the webform.',
+            ),
+            array(
+              'name' => 'submission',
+              'optional' => FALSE,
+              'source' => array('data' => 'submission'),
+              'description' => 'The submission data for this webform.',
+              'type' => 'array',
+              'default value' => array(),
+            ),
+           ),// args
+          'access callback' => 'webform_service_submission_access',
+          'access arguments' => array('create'),
+          'access arguments append' => TRUE,
+        ),// create
+        'update' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
+          'callback' => 'webform_service_submission_update',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the node to get',
+            ),
+            array(
+              'name' => 'sid',
+              'optional' => FALSE,
+              'source' => array('path' => 1),
+              'type' => 'int',
+              'description' => 'The submission ID within this webform',
+            ),
+            array(
+              'name' => 'submission',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The submission data to update',
+              'type' => 'array',
+            ),
           ),
-          array(
-            'name' => 'submission',
-            'optional' => FALSE,
-            'source' => array('data' => 'submission'),
-            'description' => 'The submission data for this webform.',
-            'type' => 'array',
-            'default value' => array(),
-          ),
-         ),// args
-        'access callback' => 'webform_service_submission_access',
-        'access arguments' => array('create'),
-        'access arguments append' => TRUE,
-      ),// create
-      'update' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
-        'callback' => 'webform_service_submission_update',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the node to get',
-          ),
-          array(
-            'name' => 'sid',
-            'optional' => FALSE,
-            'source' => array('path' => 1),
-            'type' => 'int',
-            'description' => 'The submission ID within this webform',
-          ),
-          array(
-            'name' => 'submission',
-            'optional' => FALSE,
-            'source' => 'data',
-            'description' => 'The submission data to update',
-            'type' => 'array',
-          ),
+          'access callback' => 'webform_service_submission_access',
+          'access arguments' => array('update'),
+          'access arguments append' => TRUE,
         ),
-        'access callback' => 'webform_service_submission_access',
-        'access arguments' => array('update'),
-        'access arguments append' => TRUE,
-      ),
-      'delete' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
-        'callback' => 'webform_service_submission_delete',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the node to get',
+        'delete' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
+          'callback' => 'webform_service_submission_delete',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the node to get',
+            ),
+            array(
+              'name' => 'sid',
+              'optional' => FALSE,
+              'source' => array('path' => 1),
+              'type' => 'int',
+              'description' => 'The submission ID within this webform',
+            ),
+            array(
+              'name' => 'submission',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The submission data to delete.',
+              'type' => 'array',
+            ),
           ),
-          array(
-            'name' => 'sid',
-            'optional' => FALSE,
-            'source' => array('path' => 1),
-            'type' => 'int',
-            'description' => 'The submission ID within this webform',
-          ),
-          array(
-            'name' => 'submission',
-            'optional' => FALSE,
-            'source' => 'data',
-            'description' => 'The submission data to delete.',
-            'type' => 'array',
-          ),
+          'access callback' => 'webform_service_resource_access',
+          'access arguments' => array('delete'),
+          'access arguments append' => TRUE,
         ),
-        'access callback' => 'webform_service_resource_access',
-        'access arguments' => array('delete'),
-        'access arguments append' => TRUE,
       ),
     ),
   );

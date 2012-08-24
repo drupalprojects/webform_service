@@ -18,118 +18,118 @@ function _webform_resource_definition() {
 
     // Add the resource type.
     $resources[$type] = array(
-      'retrieve' => array(
-        'callback' => 'webform_service_get_resource',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the node to get',
+      'operations' => array(
+        'retrieve' => array(
+          'callback' => 'webform_service_get_resource',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the node to get',
+            ),
           ),
+          'access callback' => 'webform_service_resource_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
         ),
-        'access callback' => 'webform_service_resource_access',
-        'access arguments' => array('view'),
-        'access arguments append' => TRUE,
+        'create' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
+          'callback' => 'webform_service_resource_create',
+          'args' => array(
+            array(
+              'name' => 'webform',
+              'optional' => FALSE,
+              'source' => array('data' => 'webform'),
+              'description' => 'All the elements that make up the webform entity.',
+              'type' => 'array',
+              'default value' => array(),
+            ),
+            array(
+              'name' => 'type',
+              'optional' => TRUE,
+              'type' => 'string',
+              'description' => 'Webform Type',
+              'default value' => $type,
+              'source' => array('param' => 'type'),
+            ),
+           ),// args
+          'access callback' => 'webform_service_resource_access',
+          'access arguments' => array('create'),
+          'access arguments append' => TRUE,
+        ),// create
+        'update' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
+          'callback' => 'webform_service_resource_update',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the node to get',
+            ),
+            array(
+              'name' => 'node',
+              'optional' => FALSE,
+              'source' => 'data',
+              'description' => 'The node data to update',
+              'type' => 'array',
+            ),
+          ),
+          'access callback' => 'webform_service_resource_access',
+          'access arguments' => array('update'),
+          'access arguments append' => TRUE,
+        ),
+        'delete' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
+          'callback' => 'webform_service_resource_delete',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+            ),
+          ),
+          'access callback' => 'webform_service_resource_access',
+          'access arguments' => array('delete'),
+          'access arguments append' => TRUE,
+        ),
+        'index' => array(
+          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
+          'help' => t('Return all webforms.'),
+          'callback' => '_webform_resource_index',
+          'args' => array(
+            array(
+              'name' => 'page',
+              'optional' => TRUE,
+              'type' => 'int',
+              'description' => 'The zero-based index of the page to get, defaults to 0.',
+              'default value' => 0,
+              'source' => array('param' => 'page'),
+            ),
+            array(
+              'name' => 'pagesize',
+              'optional' => TRUE,
+              'type' => 'int',
+              'description' => 'Number of records to get per page.',
+              'default value' => variable_get('services_node_index_page_size', 20),
+              'source' => array('param' => 'pagesize'),
+            ),
+            array(
+              'name' => 'type',
+              'optional' => TRUE,
+              'type' => 'string',
+              'description' => 'Webform Type',
+              'default value' => $type,
+              'source' => array('param' => 'type'),
+            ),
+          ),
+          'access arguments' => array('access content'),
+        ),// index
       ),
-      'create' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'callback' => 'webform_service_resource_create',
-        'args' => array(
-          array(
-            'name' => 'webform',
-            'optional' => FALSE,
-            'source' => array('data' => 'webform'),
-            'description' => 'All the elements that make up the webform entity.',
-            'type' => 'array',
-            'default value' => array(),
-          ),
-          array(
-            'name' => 'type',
-            'optional' => TRUE,
-            'type' => 'string',
-            'description' => 'Webform Type',
-            'default value' => $type,
-            'source' => array('param' => 'type'),
-          ),
-         ),// args
-        'access callback' => 'webform_service_resource_access',
-        'access arguments' => array('create'),
-        'access arguments append' => TRUE,
-      ),// create
-      'update' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'callback' => 'webform_service_resource_update',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-            'description' => 'The uuid of the node to get',
-          ),
-          array(
-            'name' => 'node',
-            'optional' => FALSE,
-            'source' => 'data',
-            'description' => 'The node data to update',
-            'type' => 'array',
-          ),
-        ),
-        'access callback' => 'webform_service_resource_access',
-        'access arguments' => array('update'),
-        'access arguments append' => TRUE,
-      ),
-      'delete' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'callback' => 'webform_service_resource_delete',
-        'args' => array(
-          array(
-            'name' => 'uuid',
-            'optional' => FALSE,
-            'source' => array('path' => 0),
-            'type' => 'string',
-          ),
-        ),
-        'access callback' => 'webform_service_resource_access',
-        'access arguments' => array('delete'),
-        'access arguments append' => TRUE,
-      ),
-
-      // webform
-      'index' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
-        'help' => t('Return all webforms.'),
-        'callback' => '_webform_resource_index',
-        'args' => array(
-          array(
-            'name' => 'page',
-            'optional' => TRUE,
-            'type' => 'int',
-            'description' => 'The zero-based index of the page to get, defaults to 0.',
-            'default value' => 0,
-            'source' => array('param' => 'page'),
-          ),
-          array(
-            'name' => 'pagesize',
-            'optional' => TRUE,
-            'type' => 'int',
-            'description' => 'Number of records to get per page.',
-            'default value' => variable_get('services_node_index_page_size', 20),
-            'source' => array('param' => 'pagesize'),
-          ),
-          array(
-            'name' => 'type',
-            'optional' => TRUE,
-            'type' => 'string',
-            'description' => 'Webform Type',
-            'default value' => $type,
-            'source' => array('param' => 'type'),
-          ),
-        ),
-        'access arguments' => array('access content'),
-      ),// index
 
       'relationships' => array(
         'submissions' => array(

@@ -145,7 +145,7 @@ function webform_service_get_resource($entity) {
   }
   if ($entity) {
     $uri = services_resource_uri(array('webform', $entity->uuid));
-    $resource = array(
+    $resource = (object)array(
       'uri' => services_resource_uri(array('webform', $entity->uuid)),
       'uuid' => $entity->uuid,
       'title' => $entity->title,
@@ -165,7 +165,7 @@ function webform_service_get_resource($entity) {
  * Returns a single submission resource.
  */
 function webform_service_get_submission($webform, $submission) {
-  
+
   // Get the webform entity.
   if (gettype($webform) === 'string') {
     $webform = webform_service_resource_load($webform);
