@@ -8,7 +8,6 @@ function _submission_resource_definition() {
   return array(
     'submission' => array(
       'retrieve' => array(
-        'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
         'callback' => 'webform_service_get_submission',
         'args' => array(
           array(
@@ -116,29 +115,6 @@ function _submission_resource_definition() {
       ),
     ),
   );
-}
-
-/**
- * Gets the submission for the provided resource and submission ID.
- */
-function webform_service_get_submission($webform, $sid) {
-  $submission = array();
-
-  // Get the webform entity.
-  if (gettype($webform) === 'string') {
-    $webform = webform_service_resource_load($webform);
-  }
-
-  // If the entity exists.
-  if ($webform) {
-
-    // Get the submission.
-    module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submission = webform_get_submission($webform->nid, $sid);
-  }
-
-  // Return the submission.
-  return $submission;
 }
 
 /**
