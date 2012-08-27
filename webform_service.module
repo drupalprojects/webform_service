@@ -41,26 +41,20 @@ function webform_service_submission_access($op = 'view', $args = array()) {
  */
 function webform_service_resource_access($op = 'view', $args = array()) {
   $node = null;
-  $uuid = '';
 
-  // Make sure the uuid is valid.
   if (empty($args[0])) {
     return services_error(t('Must provide a uuid.'), 404);
   }
-  else if (gettype($args[0]) !== 'string'){
-    return services_error(t('UUID must be a string.'), 404);
+  else if (is_array($args[0]) || is_object($args[0])) {
+    $node = (object)$args[0];
   }
-  else {
-    $uuid = $args[0];
+  else if (in_array(gettype($args[0]), array('string', 'integer'))) {
+    $node = webform_service_resource_load($args[0]);
   }
 
-  // Load the node.
-  if ($node = webform_service_resource_load($uuid)) {
-    return node_access($op, $node);
-  }
-  else {
-    return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);
-  }
+  // Return the node resource access.
+  module_load_include('inc', 'services', 'resources/node_resource');
+  return _node_resource_access($op, array($node));
 }
 
 /**
@@ -256,11 +250,13 @@ function webform_service_submission_index($uuid, $page, $page_size) {
  */
 function webform_service_resource_index($type, $result) {
   $items = array();
-  $entities = entity_load('node', array_keys($result['node']));
-  foreach ($entities as $entity) {
-    $item = webform_service_get_resource($entity);
-    if ($item) {
-      $items[] = $item;
+  if (!empty($result['node'])) {
+    $entities = entity_load('node', array_keys($result['node']));
+    foreach ($entities as $entity) {
+      $item = webform_service_get_resource($entity);
+      if ($item) {
+        $items[] = $item;
+      }
     }
   }
   return $items;

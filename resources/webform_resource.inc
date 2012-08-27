@@ -188,8 +188,9 @@ function _webform_resource_definition() {
  */
 function webform_service_resource_create($webform, $type) {
   module_load_include('inc', 'services', 'resources/node_resource');
-  $webform->type = $type;
-  return _node_resource_create($webform);
+  $webform['type'] = $type;
+  $node = _node_resource_create($webform);
+  return webform_service_get_resource(node_load($node['nid']));
 }
 
 /**

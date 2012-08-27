@@ -139,7 +139,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     $nodes = array();
     $count = 50;
     for ($i = 0; $i < $count; $i++) {
-      $node = $this->drupalCreateNode(array('type' => 'webform'));
+      $node = $this->drupalCreateNode(array('type' => $types[0]));
       $nodes[$node->uuid] = $node;
     }
 
@@ -183,5 +183,61 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     $this->drupalLogin($this->lessPrivilegedUser);
     $responseArray = $this->servicesGet($this->endpoint->path . '/' . $types[0], array('pagesize' => 40));
     $this->assertTrue(count($responseArray['body']) == 20, t('Correct number of items returned'));
+  }
+
+  /**
+   * testing node_resource Get
+   */
+  public function testNewEndpointWebformGet() {
+    $types = webform_variable_get('webform_node_types');
+
+    // Create and log in our privileged user.
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer services',
+    ));
+    $this->drupalLogin($this->privilegedUser);
+    $node = $this->drupalCreateNode(array('type' => $types[0]));
+
+    // Get the endpoint.
+    $endpoint = $this->endpoint->path . '/' . $types[0];
+
+    $responseArray = $this->servicesGet($endpoint . '/' . $node->uuid);
+    $this->assertTrue($node->title == $responseArray['body']->title, t('Successfully received Webform'), 'Webform: Retrieve');
+    //Verify node not found.
+    unset($node);
+    $responseArray = $this->servicesGet($endpoint . '/1234');
+    $this->assertTrue($responseArray['code'] == '404', t('Successfully was rejected to non existent webform'), 'Webform: Retrieve');
+  }
+
+  /**
+   * Testing webform Create.
+   */
+  public function testEndpointWebformCreate() {
+    $types = webform_variable_get('webform_node_types');
+
+    // Create and log in our privileged user.
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer services',
+      'bypass node access',
+    ));
+    $this->drupalLogin($this->privilegedUser);
+    $node = array(
+      'title' => 'testing',
+      'body' => array(LANGUAGE_NONE => array(array('value' => $this->randomString()))),
+      'type' => $types[0],
+      'name' => $this->privilegedUser->name,
+      'language' => LANGUAGE_NONE,
+    );
+
+    // Get the endpoint.
+    $endpoint = $this->endpoint->path . '/' . $types[0];
+
+    $responseArray = $this->servicesPost($endpoint, array('webform' => $node));
+    $nodeResourceCreateReturn = $responseArray['body'];
+
+    $this->assertTrue(isset($nodeResourceCreateReturn->uuid), t('Webform was successfully created'), 'Webform: Create');
+    $webform = webform_service_resource_load($nodeResourceCreateReturn->uuid);
+    $this->assertTrue($webform->title = $node['title'], t('Title was the same'), 'Webform: Create');
+    $this->assertTrue($webform->body = $node['body'], t('Body was the same'), 'Webform: Create');
   }
 }
