@@ -232,7 +232,6 @@ function webform_service_resource_create($webform, $type) {
       if (!empty($component['type'])) {
 
         // Make sure the component has some required values.
-        $component['nid'] = $node['nid'];
         $component['pid'] = empty($components['pid']) ? 0 : $components['pid'];
         $component['form_key'] = $component['id'];
         $component['weight'] = empty($components['weight']) ? ($weight++) : $components['weight'];
