@@ -52,9 +52,17 @@ function webform_service_resource_access($op = 'view', $args = array()) {
     $node = webform_service_resource_load($args[0]);
   }
 
-  // Return the node resource access.
-  module_load_include('inc', 'services', 'resources/node_resource');
-  return _node_resource_access($op, array($node));
+  if ($node) {
+
+    // Return the node resource access.
+    module_load_include('inc', 'services', 'resources/node_resource');
+    return _node_resource_access($op, array($node));
+  }
+  else {
+
+    // Return a 404.
+    return services_error(t('Webform @uuid could not be found', array('@uuid' => $args[0])), 404);
+  }
 }
 
 /**
@@ -273,7 +281,7 @@ function webform_service_resource_load($uuid) {
   if (empty($webforms[$uuid])) {
     $webforms[$uuid] = reset(entity_uuid_load('node', array($uuid)));
   }
-  return $webforms[$uuid];
+  return empty($webforms[$uuid]) ? NULL : $webforms[$uuid];
 }
 
 /**
