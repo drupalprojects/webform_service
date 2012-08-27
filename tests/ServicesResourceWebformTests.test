@@ -268,7 +268,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     $this->assertTrue(count($webform->webform['components']) === 3, t('Number of components created.'), 'Webform: Create');
     foreach ($components as $cid => $component) {
       $this->assertTrue(!empty($webform->webform['components'][$cid]), 'Component was created', 'Webform: Create');
-      $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['form_key'], t('Components match.'), 'Webform: Create');
+      $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['id'], t('Components match.'), 'Webform: Create');
     }
 
   }
