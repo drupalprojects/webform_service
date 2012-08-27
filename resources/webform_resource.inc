@@ -31,7 +31,7 @@ function _webform_resource_definition() {
             ),
           ),
           'access callback' => 'webform_service_resource_access',
-          'access arguments' => array('view'),
+          'access arguments' => array('view', $type),
           'access arguments append' => TRUE,
         ),
         'create' => array(
@@ -56,7 +56,7 @@ function _webform_resource_definition() {
             ),
            ),// args
           'access callback' => 'webform_service_resource_access',
-          'access arguments' => array('create'),
+          'access arguments' => array('create', $type),
           'access arguments append' => TRUE,
         ),// create
         'update' => array(
@@ -79,7 +79,7 @@ function _webform_resource_definition() {
             ),
           ),
           'access callback' => 'webform_service_resource_access',
-          'access arguments' => array('update'),
+          'access arguments' => array('update', $type),
           'access arguments append' => TRUE,
         ),
         'delete' => array(
@@ -94,7 +94,7 @@ function _webform_resource_definition() {
             ),
           ),
           'access callback' => 'webform_service_resource_access',
-          'access arguments' => array('delete'),
+          'access arguments' => array('delete', $type),
           'access arguments append' => TRUE,
         ),
         'index' => array(
@@ -172,6 +172,28 @@ function _webform_resource_definition() {
 }
 
 /**
+ * Sets the default values for a new webform.
+ *
+ * @param type $webform
+ * @param type $defaults
+ */
+function webform_service_set_webform_defaults(&$webform, $defaults) {
+  foreach ($defaults as $param => $value) {
+    if (is_array($value)) {
+      if (!isset($webform[$param])) {
+        $webform[$param] = array();
+      }
+      webform_service_set_webform_defaults($webform[$param], $value);
+    }
+    else {
+      if (!isset($webform[$param])) {
+        $webform[$param] = $value;
+      }
+    }
+  }
+}
+
+/**
  * Creates a new webform based on submitted values.
  *
  * Note that this function uses drupal_execute() to create new nodes,
@@ -189,8 +211,43 @@ function _webform_resource_definition() {
 function webform_service_resource_create($webform, $type) {
   module_load_include('inc', 'services', 'resources/node_resource');
   $webform['type'] = $type;
+
+  // Make sure we have a webform object.
+  if (!isset($webform['webform'])) {
+    $webform['webform'] = array();
+  }
+
+  // Set the default webform values.
+  webform_service_set_webform_defaults($webform['webform'], webform_node_defaults());
+
+  // We now need to iterate through the components.
+  if (!empty($webform['webform']['components'])) {
+
+    // Include the components.
+    module_load_include('inc', 'webform', 'includes/webform.components');
+    $weight = 0;
+    foreach ($webform['webform']['components'] as &$component) {
+
+      // Make sure they provide a type.
+      if (!empty($component['type'])) {
+
+        // Make sure the component has some required values.
+        $component['nid'] = $node['nid'];
+        $component['pid'] = empty($components['pid']) ? 0 : $components['pid'];
+        $component['form_key'] = $component['id'];
+        $component['weight'] = empty($components['weight']) ? ($weight++) : $components['weight'];
+
+        // Populate the defaults.
+        webform_component_defaults($component);
+      }
+    }
+  }
+
+  // Create a new node.
   $node = _node_resource_create($webform);
-  return webform_service_get_resource(node_load($node['nid']));
+
+  // Return the webform resource that was created.
+  return webform_service_get_resource(node_load($node['nid'], NULL, TRUE));
 }
 
 /**

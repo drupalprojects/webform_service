@@ -221,12 +221,34 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
       'bypass node access',
     ));
     $this->drupalLogin($this->privilegedUser);
+
+    // Define our webform components.
+    $components = array(
+      1 => array(
+        'id' => 'first_name',
+        'type' => 'textfield',
+        'name' => 'First Name',
+      ),
+      2 => array(
+        'id' => 'last_name',
+        'type' => 'textfield',
+        'name' => 'Last Name',
+      ),
+      3 => array(
+        'id' => 'email',
+        'type' => 'email',
+        'name' => 'Email'
+      )
+    );
+
     $node = array(
       'title' => 'testing',
       'body' => array(LANGUAGE_NONE => array(array('value' => $this->randomString()))),
-      'type' => $types[0],
       'name' => $this->privilegedUser->name,
       'language' => LANGUAGE_NONE,
+      'webform' => array(
+        'components' => $components
+      )
     );
 
     // Get the endpoint.
@@ -239,5 +261,15 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     $webform = webform_service_resource_load($nodeResourceCreateReturn->uuid);
     $this->assertTrue($webform->title = $node['title'], t('Title was the same'), 'Webform: Create');
     $this->assertTrue($webform->body = $node['body'], t('Body was the same'), 'Webform: Create');
+
+    // Now make sure the webform was created.
+    $this->assertTrue(!empty($webform->webform), t('Webform created.'), 'Webform: Create');
+    $this->assertTrue(!empty($webform->webform['components']), t('Components created.'), 'Webform: Create');
+    $this->assertTrue(count($webform->webform['components']) === 3, t('Number of components created.'), 'Webform: Create');
+    foreach ($components as $cid => $component) {
+      $this->assertTrue(!empty($webform->webform['components'][$cid]), 'Component was created', 'Webform: Create');
+      $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['form_key'], t('Components match.'), 'Webform: Create');
+    }
+
   }
 }

@@ -39,7 +39,7 @@ function webform_service_submission_access($op = 'view', $args = array()) {
  *
  * @see node_access()
  */
-function webform_service_resource_access($op = 'view', $args = array()) {
+function webform_service_resource_access($op = 'view', $type = '', $args = array()) {
   $node = null;
 
   if (empty($args[0])) {
@@ -55,6 +55,7 @@ function webform_service_resource_access($op = 'view', $args = array()) {
   if ($node) {
 
     // Return the node resource access.
+    $node->type = $type;
     module_load_include('inc', 'services', 'resources/node_resource');
     return _node_resource_access($op, array($node));
   }
@@ -87,21 +88,6 @@ function webform_service_field_value($entity, $field_name, $value_name = 'value'
 }
 
 /**
- * Returns a mapping of component types to services type.
- */
-function webform_service_get_type($field_type) {
-  switch ($field_type) {
-    case 'textfield':
-    case 'textarea':
-      return 'string';
-    case 'numberfield':
-      return 'number';
-    default:
-      return 'string';
-  }
-}
-
-/**
  * Returns the data structure for webform components.
  */
 function webform_service_get_components($webform) {
@@ -111,7 +97,7 @@ function webform_service_get_components($webform) {
       'cid' => $component['cid'],
       'id' => $component['form_key'],
       'name' => $component['name'],
-      'type' => webform_service_get_type($component['type']),
+      'type' => $component['type'],
     );
   }
   return $components;
