@@ -172,28 +172,6 @@ function _webform_resource_definition() {
 }
 
 /**
- * Sets the default values for a new webform.
- *
- * @param type $webform
- * @param type $defaults
- */
-function webform_service_set_webform_defaults(&$webform, $defaults) {
-  foreach ($defaults as $param => $value) {
-    if (is_array($value)) {
-      if (!isset($webform[$param])) {
-        $webform[$param] = array();
-      }
-      webform_service_set_webform_defaults($webform[$param], $value);
-    }
-    else {
-      if (!isset($webform[$param])) {
-        $webform[$param] = $value;
-      }
-    }
-  }
-}
-
-/**
  * Creates a new webform based on submitted values.
  *
  * Note that this function uses drupal_execute() to create new nodes,
@@ -217,33 +195,8 @@ function webform_service_resource_create($webform, $type) {
     $webform['webform'] = array();
   }
 
-  // Set the default webform values.
-  webform_service_set_webform_defaults($webform['webform'], webform_node_defaults());
-
-  // We now need to iterate through the components.
-  if (!empty($webform['webform']['components'])) {
-
-    // Include the components.
-    module_load_include('inc', 'webform', 'includes/webform.components');
-    $weight = 0;
-    foreach ($webform['webform']['components'] as &$component) {
-
-      // Make sure they provide a type.
-      if (!empty($component['type'])) {
-
-        // Make sure the component has some required values.
-        $component['pid'] = empty($components['pid']) ? 0 : $components['pid'];
-        $component['form_key'] = $component['id'];
-        $component['weight'] = empty($components['weight']) ? ($weight++) : $components['weight'];
-
-        // Populate the defaults.
-        webform_component_defaults($component);
-      }
-    }
-  }
-
-  // Create a new node.
-  $node = _node_resource_create($webform);
+  // Prepare and create a new node.
+  $node = _node_resource_create(webform_service_webform_prepare($webform));
 
   // Return the webform resource that was created.
   return webform_service_get_resource(node_load($node['nid'], NULL, TRUE));
@@ -266,9 +219,18 @@ function webform_service_resource_create($webform, $type) {
  * @see drupal_execute()
  */
 function webform_service_resource_update($uuid, $webform) {
+
+  // Load the node if it exists.
   if ($node = webform_service_resource_load($uuid)) {
-    module_load_include('inc', 'services', 'resources/node_resource');
-    return _node_resource_create($node->nid, $webform);
+
+    // Now update any values.
+    webform_service_webform_prepare($webform, $node);
+
+    // Update the webform.
+    webform_node_update($node);
+
+    // Return the webform resource that was updated.
+    return webform_service_get_resource(node_load($node->nid, NULL, TRUE));
   }
   else {
     return services_error(t('@uuid could not be found', array('@uuid' => $uuid)), 404);

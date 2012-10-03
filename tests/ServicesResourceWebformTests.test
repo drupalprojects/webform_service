@@ -10,6 +10,24 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
   protected $privilegedUser = NULL ;
   // Endpoint details.
   protected $endpoint = NULL;
+  // The default webform components.
+  protected $form_components = array(
+    1 => array(
+      'id' => 'first_name',
+      'type' => 'textfield',
+      'name' => 'First Name',
+    ),
+    2 => array(
+      'id' => 'last_name',
+      'type' => 'textfield',
+      'name' => 'Last Name',
+    ),
+    3 => array(
+      'id' => 'email',
+      'type' => 'email',
+      'name' => 'Email'
+    )
+  );
 
   /**
    * Implementation of setUp().
@@ -210,10 +228,36 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
   }
 
   /**
+   * Create a new webform.
+   *
+   * @param type $components
+   * @return type
+   */
+  public function createForm($components = array()) {
+    $response = array();
+    if ($this->privilegedUser) {
+      $types = webform_variable_get('webform_node_types');
+
+      // Get the endpoint.
+      $endpoint = $this->endpoint->path . '/' . $types[0];
+      $responseArray = $this->servicesPost($endpoint, array('webform' => array(
+        'title' => 'testing',
+        'body' => array(LANGUAGE_NONE => array(array('value' => 'testing body'))),
+        'name' => $this->privilegedUser->name,
+        'language' => LANGUAGE_NONE,
+        'webform' => array(
+          'components' => $components
+        )
+      )));
+      $response = $responseArray['body'];
+    }
+    return $response;
+  }
+
+  /**
    * Testing webform Create.
    */
   public function testEndpointWebformCreate() {
-    $types = webform_variable_get('webform_node_types');
 
     // Create and log in our privileged user.
     $this->privilegedUser = $this->drupalCreateUser(array(
@@ -222,45 +266,15 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     ));
     $this->drupalLogin($this->privilegedUser);
 
-    // Define our webform components.
-    $components = array(
-      1 => array(
-        'id' => 'first_name',
-        'type' => 'textfield',
-        'name' => 'First Name',
-      ),
-      2 => array(
-        'id' => 'last_name',
-        'type' => 'textfield',
-        'name' => 'Last Name',
-      ),
-      3 => array(
-        'id' => 'email',
-        'type' => 'email',
-        'name' => 'Email'
-      )
-    );
+    $components = $this->form_components;
 
-    $node = array(
-      'title' => 'testing',
-      'body' => array(LANGUAGE_NONE => array(array('value' => $this->randomString()))),
-      'name' => $this->privilegedUser->name,
-      'language' => LANGUAGE_NONE,
-      'webform' => array(
-        'components' => $components
-      )
-    );
+    // Create the form.
+    $form = $this->createForm($components);
 
-    // Get the endpoint.
-    $endpoint = $this->endpoint->path . '/' . $types[0];
-
-    $responseArray = $this->servicesPost($endpoint, array('webform' => $node));
-    $nodeResourceCreateReturn = $responseArray['body'];
-
-    $this->assertTrue(isset($nodeResourceCreateReturn->uuid), t('Webform was successfully created'), 'Webform: Create');
-    $webform = webform_service_resource_load($nodeResourceCreateReturn->uuid);
-    $this->assertTrue($webform->title = $node['title'], t('Title was the same'), 'Webform: Create');
-    $this->assertTrue($webform->body = $node['body'], t('Body was the same'), 'Webform: Create');
+    $this->assertTrue(isset($form->uuid), t('Webform was successfully created'), 'Webform: Create');
+    $webform = webform_service_resource_load($form->uuid);
+    $this->assertTrue($webform->title = 'testing', t('Title was the same'), 'Webform: Create');
+    $this->assertTrue($webform->body = 'testing body', t('Body was the same'), 'Webform: Create');
 
     // Now make sure the webform was created.
     $this->assertTrue(!empty($webform->webform), t('Webform created.'), 'Webform: Create');
@@ -270,6 +284,53 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
       $this->assertTrue(!empty($webform->webform['components'][$cid]), 'Component was created', 'Webform: Create');
       $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['id'], t('Components match.'), 'Webform: Create');
     }
+  }
 
+  /**
+   * Testing webform Update.
+   */
+  public function testEndpointWebformUpdate() {
+    // Create and log in our privileged user.
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer services',
+      'bypass node access',
+    ));
+    $this->drupalLogin($this->privilegedUser);
+
+    // Create the form.
+    $components = $this->form_components;
+    $form = $this->createForm($components);
+    $webform = webform_service_resource_load($form->uuid);
+
+    // Make sure we start with 3 components.
+    $this->assertTrue(count($webform->webform['components']) == 3);
+
+    // Add a new component.
+    $webform->webform['components'][] = array(
+      'id' => 'middle_name',
+      'type' => 'textfield',
+      'name' => 'Middle Name',
+    );
+
+    // Get the endpoint.
+    $endpoint = $this->endpoint->path . '/' . $webform->type . '/' . $webform->uuid;
+    $responseArray = $this->servicesPut($endpoint, (array)$webform);
+    $response = $responseArray['body'];
+
+    // Make sure we have 4 comonents now.
+    $this->assertTrue(count($response->webform['components']) == 4);
+    $this->assertTrue(!empty($response->webform['components'][4]['cid']));
+    $this->assertTrue($response->webform['components'][4]['id'] == 'middle_name');
+    $this->assertTrue($response->webform['components'][4]['name'] == 'Middle Name');
+    $this->assertTrue($response->webform['components'][4]['type'] == 'textfield');
+
+    // Now edit the name of an existing field.
+    $webform = webform_service_resource_load($form->uuid, TRUE);
+    $webform->webform['components'][2]['name'] = 'Testing';
+    $responseArray = $this->servicesPut($endpoint, (array)$webform);
+    $response = $responseArray['body'];
+
+    // Make sure the name updates.
+    $this->assertTrue($response->webform['components'][2]['name'] == 'Testing');
   }
 }

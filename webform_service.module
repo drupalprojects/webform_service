@@ -92,8 +92,8 @@ function webform_service_field_value($entity, $field_name, $value_name = 'value'
  */
 function webform_service_get_components($webform) {
   $components = array();
-  foreach ($webform['components'] as $component) {
-    $components[] = array(
+  foreach ($webform['components'] as $cid => $component) {
+    $components[$cid] = array(
       'cid' => $component['cid'],
       'id' => $component['form_key'],
       'name' => $component['name'],
@@ -262,12 +262,101 @@ function webform_service_resource_index($type, $result) {
  * @param type $uuid
  * @return type
  */
-function webform_service_resource_load($uuid) {
+function webform_service_resource_load($uuid, $reset = FALSE) {
   $webforms = &drupal_static(__FUNCTION__);
-  if (empty($webforms[$uuid])) {
-    $webforms[$uuid] = reset(entity_uuid_load('node', array($uuid)));
+  if ($reset || empty($webforms[$uuid])) {
+    $webforms[$uuid] = reset(entity_uuid_load('node', array($uuid), array(), $reset));
   }
   return empty($webforms[$uuid]) ? NULL : $webforms[$uuid];
+}
+
+/**
+ * Sets the default values for a new webform.
+ *
+ * @param type $webform
+ * @param type $defaults
+ */
+function webform_service_set_webform_values(&$webform, $values, $force_set = FALSE) {
+  foreach ($values as $param => $value) {
+    if (is_array($value)) {
+      if (!isset($webform[$param])) {
+        $webform[$param] = array();
+      }
+      webform_service_set_webform_values($webform[$param], $value, $force_set);
+    }
+    else {
+      if (!$force_set || !isset($webform[$param])) {
+        $webform[$param] = $value;
+      }
+    }
+  }
+}
+
+/**
+ * Prepares a webform object to be created or updated.
+ *
+ * @param type $webform
+ */
+function webform_service_webform_prepare($webform, &$node = null) {
+
+  // Cast the webform node to an array.
+  $webform = (array)$webform;
+
+  // If the node is defined, then update the base level params.
+  if ($node) {
+    foreach ($webform['webform'] as $param => $value) {
+      if (!is_array($value)) {
+        $node->webform[$param] = $value;
+      }
+    }
+  }
+
+  // Set the default webform values.
+  webform_service_set_webform_values($webform['webform'], webform_node_defaults(), TRUE);
+
+  // We now need to iterate through the components.
+  if (!empty($webform['webform']['components'])) {
+
+    // Include the components.
+    module_load_include('inc', 'webform', 'includes/webform.components');
+    $weight = 0;
+    foreach ($webform['webform']['components'] as &$component) {
+
+      // Make sure they provide a type.
+      if (!empty($component['type'])) {
+
+        // Make sure the component has some required values if it doesn't already exist.
+        if (empty($component['cid'])) {
+          $component['pid'] = empty($components['pid']) ? 0 : $components['pid'];
+          $component['form_key'] = $component['id'];
+          $component['weight'] = empty($components['weight']) ? ($weight++) : $components['weight'];
+          webform_component_defaults($component);
+        }
+
+        // Update the node component.
+        if ($node) {
+          if (empty($component['cid'])) {
+            $cid = max(array_keys($node->webform['components'])) + 1;
+            $component['nid'] = $node->nid;
+          }
+          else {
+            $cid = $component['cid'];
+          }
+          $node->webform['components'][$cid] = $component;
+        }
+      }
+    }
+  }
+
+  // Return the new webform.
+  return $webform;
+}
+
+/**
+ * Implements hook_node_submit
+ */
+function webform_service_node_submit($node, $form, &$form_state) {
+  $break = TRUE;
 }
 
 /**
