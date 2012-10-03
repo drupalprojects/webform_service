@@ -333,4 +333,31 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     // Make sure the name updates.
     $this->assertTrue($response->webform['components'][2]['name'] == 'Testing');
   }
+
+  /**
+   * Testing webform Delete.
+   */
+  public function testEndpointWebformDelete() {
+    // Create and log in our privileged user.
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer services',
+      'bypass node access',
+    ));
+    $this->drupalLogin($this->privilegedUser);
+
+    // Create the form.
+    $components = $this->form_components;
+    $form = $this->createForm($components);
+    $webform = webform_service_resource_load($form->uuid);
+    $this->assertTrue(!empty($form->uuid));
+    $this->assertTrue(!empty($webform->uuid));
+
+    // Delete the created webform.
+    $endpoint = $this->endpoint->path . '/' . $webform->type . '/' . $webform->uuid;
+    $this->servicesDelete($endpoint);
+
+    // Now verify it was deleted.
+    $webform = webform_service_resource_load($form->uuid, TRUE);
+    $this->assertTrue(empty($webform));
+  }
 }
