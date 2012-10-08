@@ -8,21 +8,36 @@ function _submission_resource_definition() {
   return array(
     'submission' => array(
       'operations' => array(
+        'retrieve' => array(
+          'callback' => 'webform_service_get_submission_by_uuid',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => 'The uuid of the submission.',
+            ),
+          ),
+          'access callback' => 'webform_service_submission_access',
+          'access arguments' => array('view'),
+          'access arguments append' => TRUE,
+        ),
         'create' => array(
           'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/submission_resource'),
           'callback' => 'webform_service_submission_create',
           'args' => array(
             array(
-              'name' => 'webform',
+              'name' => 'uuid',
               'optional' => FALSE,
-              'source' => array('data' => 'webform'),
+              'source' => array('path' => 0),
               'type' => 'string',
-              'description' => 'The uuid of the webform.',
+              'description' => 'The uuid of the submission.',
             ),
             array(
               'name' => 'submission',
               'optional' => FALSE,
-              'source' => array('data' => 'submission'),
+              'source' => 'data',
               'description' => 'The submission data for this webform.',
               'type' => 'array',
               'default value' => array(),
@@ -37,23 +52,16 @@ function _submission_resource_definition() {
           'callback' => 'webform_service_submission_update',
           'args' => array(
             array(
-              'name' => 'webform',
-              'optional' => FALSE,
-              'source' => array('data' => 'webform'),
-              'type' => 'string',
-              'description' => 'The uuid of the webform.',
-            ),
-            array(
-              'name' => 'sid',
+              'name' => 'uuid',
               'optional' => FALSE,
               'source' => array('path' => 0),
-              'type' => 'int',
-              'description' => 'The submission ID within this webform',
+              'type' => 'string',
+              'description' => 'The uuid of the submission.',
             ),
             array(
               'name' => 'submission',
               'optional' => FALSE,
-              'source' => array('data' => 'submission'),
+              'source' => 'data',
               'description' => 'The submission data to update',
               'type' => 'array',
             ),
@@ -67,25 +75,11 @@ function _submission_resource_definition() {
           'callback' => 'webform_service_submission_delete',
           'args' => array(
             array(
-              'name' => 'webform',
-              'optional' => FALSE,
-              'source' => array('data' => 'webform'),
-              'type' => 'string',
-              'description' => 'The uuid of the webform.',
-            ),
-            array(
-              'name' => 'sid',
+              'name' => 'uuid',
               'optional' => FALSE,
               'source' => array('path' => 0),
-              'type' => 'int',
-              'description' => 'The submission ID within this webform',
-            ),
-            array(
-              'name' => 'submission',
-              'optional' => FALSE,
-              'source' => array('data' => 'submission'),
-              'description' => 'The submission data to delete.',
-              'type' => 'array',
+              'type' => 'string',
+              'description' => 'The uuid of the submission.',
             ),
           ),
           'access callback' => 'webform_service_resource_access',
@@ -112,18 +106,15 @@ function _submission_resource_definition() {
  *
  * @see drupal_execute()
  */
-function webform_service_submission_create($webform, $submission) {
+function webform_service_submission_create($uuid, $submission) {
   // Get the webform entity.
-  if (is_int($webform) || is_string($webform)) {
-    $webform = webform_service_resource_load($webform);
-  }
+  $webform = webform_submission_uuid_webform($uuid);
 
   // If the entity exists.
   if ($webform && $submission) {
-
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = webform_submission_insert($webform, webform_service_parse_submission($webform, $submission));
-    return webform_service_get_submission($webform, intval($sid));
+    return webform_service_get_submission($webform, webform_get_submission($webform->nid, $sid, TRUE));
   }
   else {
     return FALSE;
@@ -148,18 +139,17 @@ function webform_service_submission_create($webform, $submission) {
  *
  * @see drupal_execute()
  */
-function webform_service_submission_update($webform, $sid, $submission) {
+function webform_service_submission_update($uuid, $submission) {
+
   // Get the webform entity.
-  if (is_int($webform) || is_string($webform)) {
-    $webform = webform_service_resource_load($webform);
-  }
+  $webform = webform_submission_uuid_webform($uuid);
+  $submission = webform_submission_uuid_submission($uuid);
 
   // If the entity exists.
-  if ($webform && $sid) {
-    $submission['sid'] = $sid;
+  if ($webform && $submission) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = webform_submission_update($webform, webform_service_parse_submission($webform, $submission));
-    return webform_service_get_submission($webform, intval($sid));
+    return webform_service_get_submission($webform, webform_get_submission($webform->nid, $sid, TRUE));
   }
   else {
     return FALSE;
@@ -174,15 +164,13 @@ function webform_service_submission_update($webform, $sid, $submission) {
  * @return
  *   The node's nid.
  */
-function webform_service_submission_delete($webform, $sid, $submission) {
+function webform_service_submission_delete($uuid) {
   // Get the webform entity.
-  if (is_int($webform) || is_string($webform)) {
-    $webform = webform_service_resource_load($webform);
-  }
+  $webform = webform_submission_uuid_webform($uuid);
+  $submission = webform_submission_uuid_submission($uuid);
 
   // If the entity exists.
-  if ($webform && $sid) {
-    $submission['sid'] = $sid;
+  if ($webform && $submission) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     webform_submission_delete($webform, webform_service_parse_submission($webform, $submission));
     return TRUE;

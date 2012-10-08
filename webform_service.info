@@ -5,6 +5,7 @@ dependencies[] = services
 dependencies[] = webform
 dependencies[] = ctools
 dependencies[] = uuid
+dependencies[] = webform_submission_uuid
 
 files[] = tests/ServicesResourceWebformTests.test
 core = 7.x
