@@ -130,10 +130,8 @@ function _webform_resource_definition() {
           'access arguments' => array('access content'),
         ),// index
       ),
-
       'relationships' => array(
         'submissions' => array(
-          'file' => array('type' => 'inc', 'module' => 'webform_service', 'name' => 'resources/webform_resource'),
           'help' => t('Retrieve the submissions provided a webform.'),
           'callback' => 'webform_service_submission_index',
           'args' => array(
@@ -163,6 +161,27 @@ function _webform_resource_definition() {
           ),
           'access arguments' => array('access content'),
         ),// submissions
+        'submission' => array(
+          'help' => t('Retrieve the submission provided a webform and submission ID.'),
+          'callback' => 'webform_service_get_submission',
+          'args' => array(
+            array(
+              'name' => 'uuid',
+              'optional' => FALSE,
+              'source' => array('path' => 0),
+              'type' => 'string',
+              'description' => t('The uuid of the webform you want the relationship for.'),
+            ),
+            array(
+              'name' => 'sid',
+              'optional' => FALSE,
+              'source' => array('path' => 2),
+              'type' => 'int',
+              'description' => 'The submission ID.',
+            ),
+          ),
+          'access arguments' => array('access content'),
+        ),// submission
       ),// relationships
     );
   }

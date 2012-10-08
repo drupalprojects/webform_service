@@ -13,17 +13,17 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
   // The default webform components.
   protected $form_components = array(
     1 => array(
-      'id' => 'first_name',
+      'form_key' => 'first_name',
       'type' => 'textfield',
       'name' => 'First Name',
     ),
     2 => array(
-      'id' => 'last_name',
+      'form_key' => 'last_name',
       'type' => 'textfield',
       'name' => 'Last Name',
     ),
     3 => array(
-      'id' => 'email',
+      'form_key' => 'email',
       'type' => 'email',
       'name' => 'Email'
     )
@@ -120,6 +120,23 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
         ),
       );
     }
+
+    $this->endpoint->resources['submission'] = array(
+      'operations' => array(
+        'create' => array(
+          'enabled' => 1,
+        ),
+        'retrieve' => array(
+          'enabled' => 1,
+        ),
+        'update' => array(
+          'enabled' => 1,
+        ),
+        'delete' => array(
+          'enabled' => 1,
+        ),
+      ),
+    );
 
     $this->endpoint->debug = 1;
     $this->endpoint->export_type = FALSE;
@@ -282,7 +299,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     $this->assertTrue(count($webform->webform['components']) === 3, t('Number of components created.'), 'Webform: Create');
     foreach ($components as $cid => $component) {
       $this->assertTrue(!empty($webform->webform['components'][$cid]), 'Component was created', 'Webform: Create');
-      $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['id'], t('Components match.'), 'Webform: Create');
+      $this->assertTrue($webform->webform['components'][$cid]['form_key'] == $component['form_key'], t('Components match.'), 'Webform: Create');
     }
   }
 
@@ -307,7 +324,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
 
     // Add a new component.
     $webform->webform['components'][] = array(
-      'id' => 'middle_name',
+      'form_key' => 'middle_name',
       'type' => 'textfield',
       'name' => 'Middle Name',
     );
@@ -320,7 +337,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     // Make sure we have 4 comonents now.
     $this->assertTrue(count($response->webform['components']) == 4);
     $this->assertTrue(!empty($response->webform['components'][4]['cid']));
-    $this->assertTrue($response->webform['components'][4]['id'] == 'middle_name');
+    $this->assertTrue($response->webform['components'][4]['form_key'] == 'middle_name');
     $this->assertTrue($response->webform['components'][4]['name'] == 'Middle Name');
     $this->assertTrue($response->webform['components'][4]['type'] == 'textfield');
 
@@ -359,5 +376,105 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
     // Now verify it was deleted.
     $webform = webform_service_resource_load($form->uuid, TRUE);
     $this->assertTrue(empty($webform));
+  }
+
+  /**
+   * Test creating submissions on a webform.
+   */
+  public function testEndpointSubmission() {
+    // Create and log in our privileged user.
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer services',
+      'bypass node access',
+    ));
+    $this->drupalLogin($this->privilegedUser);
+
+    // Create the form.
+    $components = $this->form_components;
+    $form = $this->createForm($components);
+    $webform = webform_service_resource_load($form->uuid);
+
+    // Create and login a new user.
+    $this->drupalLogin($this->drupalCreateUser(array(
+      'access own webform submissions',
+      'edit own webform submissions',
+      'delete own webform submissions',
+      'access own webform results',
+    )));
+
+    // Set the endpoint...
+    $endpoint = $this->endpoint->path . '/submission';
+
+    $submissions = array();
+
+    // Add 10 submissions.
+    for ($i=0; $i < 10; $i++) {
+      $rand = rand(0, 1000000);
+      $data1 = array('values' => array('first' . $rand));
+      $data2 = array('values' => array('last' . $rand));
+      $data3 = array('values' => array('email' . $rand . '@example.com'));
+      $response = $this->servicesPost($endpoint, array(
+        'webform' => $webform->uuid,
+        'submission' => array('data' => array(
+          1 => $data1,
+          2 => $data2,
+          3 => $data3)
+        )
+      ));
+      $response = $response['body'];
+      $this->assertTrue($response['data'][1]['values'] == $data1['values']);
+      $this->assertTrue($response['data'][2]['values'] == $data2['values']);
+      $this->assertTrue($response['data'][3]['values'] == $data3['values']);
+    }
+
+    // Now get some submissions and update them.
+    $endpoint = $this->endpoint->path . '/webform/' . $webform->uuid . '/submissions';
+    $indexResponse = $this->servicesGet($endpoint);
+    $indexResponse = $indexResponse['body'];
+
+    // Iterate through 3 submissions and update them to make sure they update.
+    for ($index=2; $index < 5; $index++) {
+
+      // Get the resource for this index.
+      $resource = $indexResponse[$index];
+
+      // The get endpoint.
+      $get = $this->endpoint->path . '/webform/' . $webform->uuid . '/submission/' . $resource['sid'];
+      $getResponse = $this->servicesGet($get);
+      $getResponse = $getResponse['body'];
+      $this->assertTrue($getResponse['sid'] == $resource['sid']);
+
+      // Update the resource.
+      $crud = $this->endpoint->path . '/submission/' . $resource['sid'];
+      $data1 = array('values' => array('First ' . $index));
+      $data2 = array('values' => array('Last ' . $index));
+      $data3 = array('values' => array('email' . $index . '@email.com'));
+      $resource['data'] = array(
+        1 => $data1,
+        2 => $data2,
+        3 => $data3
+      );
+      $updateResponse = $this->servicesPut($crud, array(
+        'webform' => $webform->uuid,
+        'submission' => $resource,
+      ));
+      $updateResponse = $updateResponse['body'];
+      $this->assertTrue($updateResponse['data'][1]['values'] == $data1['values']);
+      $this->assertTrue($updateResponse['data'][2]['values'] == $data2['values']);
+      $this->assertTrue($updateResponse['data'][3]['values'] == $data3['values']);
+
+      // Now delete it and make sure it deletes.
+      $deleteResponse = $this->servicesDelete($crud, array(
+        'webform' => $webform->uuid,
+        'submission' => $resource
+      ));
+      $deleteResponse = $deleteResponse['body'];
+      $this->assertTrue($deleteResponse);
+
+      // Make sure it is gone.
+      $getResponse = $this->servicesGet($get);
+      $this->assertTrue($getResponse['code'] == 404);
+
+    }
   }
 }

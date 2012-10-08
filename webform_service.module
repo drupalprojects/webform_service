@@ -21,8 +21,37 @@ function webform_service_services_resources() {
  */
 function webform_service_submission_access($op = 'view', $args = array()) {
 
-  // @todo: Fix the submission access...
-  return TRUE;
+  // First get the webform.
+  if (empty($args[0])) {
+    return services_error(t('Must provide a uuid.'), 404);
+  }
+  else if (is_array($args[0]) || is_object($args[0])) {
+    $node = (object)$args[0];
+  }
+  else if (in_array(gettype($args[0]), array('string', 'integer'))) {
+    $node = webform_service_resource_load($args[0]);
+  }
+
+  // The create submission access check.
+  if ($op == 'create') {
+    // If they can access the node view, then they can create a submission.
+    $webform = webform_node_view($node, 'node');
+    return empty($webform['#enabled']);
+  }
+  else {
+
+    // Get the submission.
+    $submission = $args[1];
+
+    // If the submission is an index, then load it.
+    if (is_int($submission) || is_string($submission)) {
+      module_load_include('inc', 'webform', 'includes/webform.submissions');
+      $submission = webform_get_submission($node->nid, $submission);
+    }
+
+    // Return if we have access to do this operation.
+    return webform_submission_access($node, $submission, $op);
+  }
 }
 
 /**
@@ -95,7 +124,7 @@ function webform_service_get_components($webform) {
   foreach ($webform['components'] as $cid => $component) {
     $components[$cid] = array(
       'cid' => $component['cid'],
-      'id' => $component['form_key'],
+      'form_key' => $component['form_key'],
       'name' => $component['name'],
       'type' => $component['type'],
     );
@@ -150,6 +179,38 @@ function webform_service_get_resource($entity) {
 }
 
 /**
+ * Provided a submission in external format, this parses it to what webform expects.
+ * @param type $webform
+ * @param type $submission
+ */
+function webform_service_parse_submission($webform, $submission) {
+  global $user;
+
+  // Normalize the submission data.
+  $data = array();
+  foreach ($submission['data'] as $cid => $values) {
+    $data[$cid] = $values['values'];
+  }
+
+  // Setup the submission object.
+  $submission_obj = (object)array(
+    'nid' => $webform->nid,
+    'uid' => $user->uid,
+    'submitted' => REQUEST_TIME,
+    'remote_addr' => ip_address(),
+    'is_draft' => 0,
+    'data' => $data,
+  );
+
+  // Add the submission ID if it is provided.
+  if (!empty($submission['sid'])) {
+    $submission_obj->sid = $submission['sid'];
+  }
+
+  return $submission_obj;
+}
+
+/**
  * Returns a single submission resource.
  */
 function webform_service_get_submission($webform, $submission) {
@@ -166,8 +227,8 @@ function webform_service_get_submission($webform, $submission) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
 
     // If the submission is an idex, then load it.
-    if (is_int($submission)) {
-      $submission = webform_get_submission($webform->nid, $submission);
+    if (is_int($submission) || is_string($submission)) {
+      $submission = webform_get_submission($webform->nid, $submission, TRUE);
     }
 
     // Make sure the submission exists.
@@ -175,15 +236,16 @@ function webform_service_get_submission($webform, $submission) {
 
       // Get the components and establish the values.
       $components = webform_service_get_components($webform->webform);
+
+      // Get the submitted values from this submission.
       $values = array();
-      foreach ($components as $component) {
-        foreach ($submission->data[$component['cid']] as $index => $value) {
-          $values[] = array(
-            'id' => $component['id'],
-            'value' => $submission->data[$component['cid']][$index],
-            'index' => $index
-          );
-        }
+      foreach ($components as $cid => $component) {
+        $values[$cid] = array(
+          'form_key' => $component['form_key'],
+          'cid' => $component['cid'],
+          'type' => $component['type'],
+          'values' => $submission->data[$component['cid']]
+        );
       }
 
       // Load the user account.
@@ -328,7 +390,7 @@ function webform_service_webform_prepare($webform, &$node = null) {
         // Make sure the component has some required values if it doesn't already exist.
         if (empty($component['cid'])) {
           $component['pid'] = empty($components['pid']) ? 0 : $components['pid'];
-          $component['form_key'] = $component['id'];
+          $component['form_key'] = $component['form_key'];
           $component['weight'] = empty($components['weight']) ? ($weight++) : $components['weight'];
           webform_component_defaults($component);
         }
