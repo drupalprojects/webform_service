@@ -36,36 +36,32 @@ function webform_service_services_resources() {
  */
 function webform_service_submission_access($op = 'view', $args = array()) {
 
-  // First get the webform.
+  // Check to make sure they always have a UUID.
   if (empty($args[0])) {
     return services_error(t('Must provide a uuid.'), 404);
-  }
-  else if (is_array($args[0]) || is_object($args[0])) {
-    $node = (object)$args[0];
-  }
-  else if (in_array(gettype($args[0]), array('string', 'integer'))) {
-    $node = webform_service_resource_load($args[0]);
   }
 
   // The create submission access check.
   if ($op == 'create') {
+
+    // Get the webform provided the UUID.
+    if (is_array($args[0]) || is_object($args[0])) {
+      $webform = (object)$args[0];
+    }
+    else if (in_array(gettype($args[0]), array('string', 'integer'))) {
+      $webform = webform_service_resource_load($args[0]);
+    }
+
     // If they can access the node view, then they can create a submission.
-    $webform = webform_node_view($node, 'node');
+    $webform = webform_node_view($webform, 'node');
     return empty($webform['#enabled']);
   }
   else {
 
-    // Get the submission.
-    $submission = $args[1];
-
-    // If the submission is an index, then load it.
-    if (is_int($submission) || is_string($submission)) {
-      module_load_include('inc', 'webform', 'includes/webform.submissions');
-      $submission = webform_get_submission($node->nid, $submission);
-    }
-
-    // Return if we have access to do this operation.
-    return webform_submission_access($node, $submission, $op);
+    // Get the webform and submission from the uuid.
+    $webform = webform_submission_uuid_webform($args[0]);
+    $submission = webform_submission_uuid_submission($args[0]);
+    return webform_submission_access($webform, $submission, $op);
   }
 }
 

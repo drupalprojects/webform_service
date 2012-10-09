@@ -1,4 +1,20 @@
 /**
+ * Get a list of all webforms.
+ */
+var getWebforms = function(endpoint, query, callback) {
+  var url = endpoint + '/webform.json';
+  url += query ? jQuery.param(query) : '';
+  jQuery.ajax({
+    url: url,
+    success: function(data) {
+      if (callback) {
+        callback(data);
+      }
+    }
+  });
+};
+
+/**
  * Create a new webform.
  */
 var createWebform = function(endpoint, node, callback) {

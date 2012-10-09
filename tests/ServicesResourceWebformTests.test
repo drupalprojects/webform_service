@@ -260,7 +260,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
 
       // Get the endpoint.
       $endpoint = $this->endpoint->path . '/' . $types[0];
-      $responseArray = $this->servicesPost($endpoint, array('webform' => array(
+      $responseArray = $this->servicesPost($endpoint, array(
         'title' => 'testing',
         'body' => array(LANGUAGE_NONE => array(array('value' => 'testing body'))),
         'name' => $this->privilegedUser->name,
@@ -268,7 +268,7 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
         'webform' => array(
           'components' => $components
         )
-      )));
+      ));
       $response = $responseArray['body'];
     }
     return $response;
