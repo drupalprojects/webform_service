@@ -463,16 +463,6 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
       $this->assertTrue($updateResponse['data'][1]['values'] == $data1['values']);
       $this->assertTrue($updateResponse['data'][2]['values'] == $data2['values']);
       $this->assertTrue($updateResponse['data'][3]['values'] == $data3['values']);
-
-      // Now delete it and make sure it deletes.
-      $deleteResponse = $this->servicesDelete($crud);
-      $deleteResponse = $deleteResponse['body'];
-      $this->assertTrue($deleteResponse);
-
-      // Make sure it is gone.
-      $getResponse = $this->servicesGet($crud);
-      $this->assertTrue($getResponse['code'] == 404);
-
     }
   }
 }
