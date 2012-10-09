@@ -441,14 +441,15 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
       // Get the resource for this index.
       $resource = $indexResponse[$index];
 
+      // Set the crud endpoint.
+      $crud = $this->endpoint->path . '/submission/' . $resource['uuid'];
+
       // The get endpoint.
-      $get = $this->endpoint->path . '/webform/' . $webform->uuid . '/submission/' . $resource['sid'];
-      $getResponse = $this->servicesGet($get);
+      $getResponse = $this->servicesGet($crud);
       $getResponse = $getResponse['body'];
       $this->assertTrue($getResponse['sid'] == $resource['sid']);
 
       // Update the resource.
-      $crud = $this->endpoint->path . '/submission/' . $resource['sid'];
       $data1 = array('values' => array('First ' . $index));
       $data2 = array('values' => array('Last ' . $index));
       $data3 = array('values' => array('email' . $index . '@email.com'));
@@ -457,25 +458,19 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
         2 => $data2,
         3 => $data3
       );
-      $updateResponse = $this->servicesPut($crud, array(
-        'webform' => $webform->uuid,
-        'submission' => $resource,
-      ));
+      $updateResponse = $this->servicesPut($crud, $resource);
       $updateResponse = $updateResponse['body'];
       $this->assertTrue($updateResponse['data'][1]['values'] == $data1['values']);
       $this->assertTrue($updateResponse['data'][2]['values'] == $data2['values']);
       $this->assertTrue($updateResponse['data'][3]['values'] == $data3['values']);
 
       // Now delete it and make sure it deletes.
-      $deleteResponse = $this->servicesDelete($crud, array(
-        'webform' => $webform->uuid,
-        'submission' => $resource
-      ));
+      $deleteResponse = $this->servicesDelete($crud);
       $deleteResponse = $deleteResponse['body'];
       $this->assertTrue($deleteResponse);
 
       // Make sure it is gone.
-      $getResponse = $this->servicesGet($get);
+      $getResponse = $this->servicesGet($crud);
       $this->assertTrue($getResponse['code'] == 404);
 
     }
