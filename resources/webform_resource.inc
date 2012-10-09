@@ -41,7 +41,7 @@ function _webform_resource_definition() {
             array(
               'name' => 'webform',
               'optional' => FALSE,
-              'source' => array('data' => 'webform'),
+              'source' => 'data',
               'description' => 'All the elements that make up the webform entity.',
               'type' => 'array',
               'default value' => array(),

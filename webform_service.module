@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * Implements hook_library().
+ */
+function webform_service_library() {
+  return array(
+    'webform_service' => array(
+      'title' => t('Webform Service JavaScript API'),
+      'version' => '0.1',
+      'js' => array(
+        drupal_get_path('module', 'webform_service') . '/js/webform_service_crud.js' => array(),
+      )
+    )
+  );
+}
+
 /*
  * Implements hook_services_resources().
  */
@@ -186,25 +201,29 @@ function webform_service_get_resource($entity) {
 function webform_service_parse_submission($webform, $submission) {
   global $user;
 
+  // Make sure the submission and webforms are objects.
+  $webform = (object)$webform;
+  $submission = (object)$submission;
+
   // Normalize the submission data.
   $data = array();
-  foreach ($submission['data'] as $cid => $values) {
+  foreach ($submission->data as $cid => $values) {
     $data[$cid] = $values['values'];
   }
 
   // Setup the submission object.
   $submission_obj = (object)array(
-    'nid' => $webform->nid,
-    'uid' => $user->uid,
+    'nid' => !empty($submission->nid) ? $submission->nid : $webform->nid,
+    'uid' => !empty($submission->uid) ? $submission->uid : $user->uid,
     'submitted' => REQUEST_TIME,
-    'remote_addr' => ip_address(),
+    'remote_addr' => !empty($submission->remote_addr) ? $submission->remote_addr : ip_address(),
     'is_draft' => 0,
     'data' => $data,
   );
 
   // Add the submission ID if it is provided.
-  if (!empty($submission['sid'])) {
-    $submission_obj->sid = $submission['sid'];
+  if (!empty($submission->sid)) {
+    $submission_obj->sid = $submission->sid;
   }
 
   return $submission_obj;
@@ -254,7 +273,8 @@ function webform_service_get_submission($webform, $submission) {
     // The return for this submission.
     $return = array(
       'sid' => $submission->sid,
-      'uri' => services_resource_uri(array('webform', $webform->uuid)) . '/' . $submission->sid,
+      'uuid' => $submission->uuid,
+      'uri' => services_resource_uri(array('submission', $submission->uuid)),
       'webform' => services_resource_uri(array('webform', $webform->uuid)),
       'user' => $account->uuid,
       'submitted' => $submission->submitted,

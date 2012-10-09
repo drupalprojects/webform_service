@@ -77,6 +77,9 @@ class ServicesResourceWebformTests extends ServicesWebTestCase {
           'create' => array(
             'enabled' => 1,
           ),
+          'retrieve' => array(
+            'enabled' => 1,
+          ),
           'update' => array(
             'enabled' => 1,
           ),

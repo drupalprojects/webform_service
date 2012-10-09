@@ -30,14 +30,14 @@ function _submission_resource_definition() {
             array(
               'name' => 'uuid',
               'optional' => FALSE,
-              'source' => array('path' => 0),
+              'source' => array('data' => 'webform'),
               'type' => 'string',
-              'description' => 'The uuid of the submission.',
+              'description' => 'The uuid of the webform.',
             ),
             array(
               'name' => 'submission',
               'optional' => FALSE,
-              'source' => 'data',
+              'source' => array('data' => 'submission'),
               'description' => 'The submission data for this webform.',
               'type' => 'array',
               'default value' => array(),
@@ -82,7 +82,7 @@ function _submission_resource_definition() {
               'description' => 'The uuid of the submission.',
             ),
           ),
-          'access callback' => 'webform_service_resource_access',
+          'access callback' => 'webform_service_submission_access',
           'access arguments' => array('delete'),
           'access arguments append' => TRUE,
         ),
@@ -108,7 +108,7 @@ function _submission_resource_definition() {
  */
 function webform_service_submission_create($uuid, $submission) {
   // Get the webform entity.
-  $webform = webform_submission_uuid_webform($uuid);
+  $webform = webform_service_resource_load($uuid);
 
   // If the entity exists.
   if ($webform && $submission) {
@@ -143,10 +143,23 @@ function webform_service_submission_update($uuid, $submission) {
 
   // Get the webform entity.
   $webform = webform_submission_uuid_webform($uuid);
-  $submission = webform_submission_uuid_submission($uuid);
+  $current_submission = webform_submission_uuid_submission($uuid);
 
   // If the entity exists.
-  if ($webform && $submission) {
+  if ($webform && $current_submission) {
+    foreach ($current_submission as $key => $value) {
+      if ($key == 'data') {
+        foreach ($value as $cid => $data) {
+          if (!isset($submission['data'][$cid])) {
+            $submission['data'][$cid] = array('values' => $data);
+          }
+        }
+      }
+      else {
+        $submission[$key] = $value;
+      }
+    }
+
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = webform_submission_update($webform, webform_service_parse_submission($webform, $submission));
     return webform_service_get_submission($webform, webform_get_submission($webform->nid, $sid, TRUE));
