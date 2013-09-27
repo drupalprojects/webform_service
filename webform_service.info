@@ -1,6 +1,10 @@
 name = Webform Service
-description = Provides a webform service.
-package = Services - services
+description = Provides services for the Webform module
+package = Services
 dependencies[] = services
 dependencies[] = webform
+dependencies[] = ctools
+dependencies[] = uuid
+dependencies[] = webform_submission_uuid
+
 core = 6.x
