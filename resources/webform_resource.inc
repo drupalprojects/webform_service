@@ -186,6 +186,9 @@ function webform_service_resource_create($webform, $type) {
   module_load_include('inc', 'services', 'resources/node_resource');
   $webform['type'] = $type;
 
+  // Allow other modules to modify the webform.
+  drupal_alter('webform_service_webform', $webform, $type);
+
   // Make sure we have a webform object.
   if (!isset($webform['webform'])) {
     $webform['webform'] = array();
