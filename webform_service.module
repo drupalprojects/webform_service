@@ -348,6 +348,11 @@ function webform_service_webform_prepare($webform, &$node = null) {
     }
   }
 
+  // Set the node title.
+  if (isset($webform['webform']['title'])) {
+    $webform['title'] = $webform['webform']['title'];
+  }
+
   // Set the default webform values.
   webform_service_set_webform_values($webform['webform'], webform_node_defaults(), TRUE);
 
