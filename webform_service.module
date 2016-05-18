@@ -287,13 +287,15 @@ function webform_service_get_submission($webform, $submission) {
 /**
  * Retrieve all submissions for a webform.
  */
-function webform_service_submission_index($uuid, $page, $page_size) {
+function webform_service_submission_index($uuid, $page, $page_size, $parameters) {
   if ($webform = webform_service_resource_load($uuid)) {
 
-    // Establish the index.
+    // Establish the index by setting the default nid filter, and then using any
+    // additional parameters as filters when getting the submissions.
     $index = array();
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $submissions = webform_get_submissions(array('nid' => $webform->nid));
+    $parameters['nid'] = $webform->nid;
+    $submissions = webform_get_submissions($parameters);
 
     // Iterate through each submission and get the submission.
     foreach ($submissions as $submission) {

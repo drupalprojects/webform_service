@@ -158,6 +158,14 @@ function _webform_resource_definition() {
               'default value' => variable_get('services_node_index_page_size', 20),
               'source' => array('param' => 'pagesize'),
             ),
+            array(
+              'name' => 'parameters',
+              'optional' => TRUE,
+              'type' => 'array',
+              'description' => 'Parameter filters to apply to the index.',
+              'default value' => array(),
+              'source' => array('param' => 'parameters'),
+            ),
           ),
           'access arguments' => array('access content'),
         ),// submissions
