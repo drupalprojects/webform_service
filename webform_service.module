@@ -201,6 +201,9 @@ function webform_service_parse_submission($webform, $submission) {
   $webform = (object)$webform;
   $submission = (object)$submission;
 
+  // If the submission data was bundled within the submission, pull it out.
+  if (isset($submission->submission)) { $submission = (object)$submission->submission; }
+
   // Normalize the submission data.
   $data = array();
   foreach ($submission->data as $cid => $values) {
