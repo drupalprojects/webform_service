@@ -343,7 +343,8 @@ function webform_service_resource_index($type, $result) {
 function webform_service_resource_load($uuid, $reset = FALSE) {
   $webforms = &drupal_static(__FUNCTION__);
   if ($reset || empty($webforms[$uuid])) {
-    $webforms[$uuid] = reset(entity_uuid_load('node', array($uuid), array(), $reset));
+    $entity = entity_uuid_load('node', array($uuid), array(), $reset);
+    $webforms[$uuid] = reset($entity);
   }
   return empty($webforms[$uuid]) ? NULL : $webforms[$uuid];
 }
