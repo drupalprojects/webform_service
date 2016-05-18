@@ -114,6 +114,8 @@ function webform_service_submission_create($uuid, $submission) {
   if ($webform && $submission) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     $sid = webform_submission_insert($webform, webform_service_parse_submission($webform, $submission));
+    $saved_submission = webform_get_submission($webform->nid, $sid);
+    webform_submission_send_mail($webform, $saved_submission);
     return webform_service_get_submission($webform, webform_get_submission($webform->nid, $sid, TRUE));
   }
   else {
