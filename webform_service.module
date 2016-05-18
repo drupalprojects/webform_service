@@ -214,7 +214,7 @@ function webform_service_parse_submission($webform, $submission) {
   $submission_obj = (object)array(
     'nid' => !empty($submission->nid) ? $submission->nid : $webform->nid,
     'uid' => !empty($submission->uid) ? $submission->uid : $user->uid,
-    'submitted' => REQUEST_TIME,
+    'submitted' => !empty($submission->submitted) ? $submission->submitted : REQUEST_TIME,
     'remote_addr' => !empty($submission->remote_addr) ? $submission->remote_addr : ip_address(),
     'is_draft' => 0,
     'data' => $data,
@@ -223,6 +223,21 @@ function webform_service_parse_submission($webform, $submission) {
   // Add the submission ID if it is provided.
   if (!empty($submission->sid)) {
     $submission_obj->sid = $submission->sid;
+  }
+
+  // Add the uuid value if provided.
+  if (!empty($submission->uuid)) {
+    $submission_obj->uuid = $submission->uuid;
+  }
+
+  // Add the completed value if provided.
+  if (!empty($submission->completed)) {
+    $submission_obj->completed = $submission->completed;
+  }
+
+  // Add the modified value if provided. Will eventually be overridden if doing an update.
+  if (!empty($submission->modified)) {
+    $submission_obj->modified = $submission->modified;
   }
 
   return $submission_obj;
