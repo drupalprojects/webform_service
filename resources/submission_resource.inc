@@ -160,8 +160,15 @@ function webform_service_submission_update($uuid, $submission) {
       }
     }
 
+    // If there is a current submission id, we must be updating a submission, so
+    // add it to the submission.
+    if (!isset($submission['submission']['sid']) && isset($current_submission->sid)) {
+      $submission['submission']['sid'] = $current_submission->sid;
+    }
+
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    $sid = webform_submission_update($webform, webform_service_parse_submission($webform, $submission));
+    $parsed = webform_service_parse_submission($webform, $submission);
+    $sid = webform_submission_update($webform, $parsed);
     return webform_service_get_submission($webform, webform_get_submission($webform->nid, $sid, TRUE));
   }
   else {
