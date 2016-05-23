@@ -175,6 +175,7 @@ function webform_service_get_resource($entity) {
     $uri = services_resource_uri(array('webform', $entity->uuid));
     $resource = (object)array(
       'uri' => services_resource_uri(array('webform', $entity->uuid)),
+      'nid' => $entity->nid,
       'uuid' => $entity->uuid,
       'title' => $entity->title,
       'description' => webform_service_field_value($entity, 'body'),
