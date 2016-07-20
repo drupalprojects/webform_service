@@ -280,9 +280,11 @@ function webform_service_get_submission($webform, $submission) {
       $values[$cid] = array(
         'form_key' => $component['form_key'],
         'cid' => $component['cid'],
-        'type' => $component['type'],
-        'values' => $submission->data[$component['cid']]
+        'type' => $component['type']
       );
+      if (isset($submission->data[$component['cid']])) {
+        $values[$cid]['values'] = $submission->data[$component['cid']];
+      }
     }
 
     // Load the user account.
