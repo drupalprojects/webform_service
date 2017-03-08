@@ -150,13 +150,25 @@ function webform_service_get_components($webform) {
 }
 
 /**
+ * Returns the data structure for webform conditionals.
+ */
+function webform_service_get_conditionals($webform) {
+  $conditionals = array();
+  foreach ($webform['conditionals'] as $cid => $conditional) {
+    $conditionals[$cid] = $conditional;
+  }
+  return $conditionals;
+}
+
+/**
  * Returns a data structure of a webform object.
  */
 function webform_service_get_webform($entity) {
   $webform = array();
   if (isset($entity->webform)) {
     $webform = array(
-      'components' => webform_service_get_components($entity->webform)
+      'components' => webform_service_get_components($entity->webform),
+      'conditionals' => webform_service_get_conditionals($entity->webform),
     );
   }
   return $webform;
