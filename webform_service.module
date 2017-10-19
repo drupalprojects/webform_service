@@ -133,7 +133,6 @@ function webform_service_field_value($entity, $field_name, $value_name = 'value'
 function webform_service_get_components($webform) {
   $components = array();
   foreach ($webform['components'] as $cid => $component) {
-
     if (isset($component['extra']['items'])) {
       $items = preg_split("/\r\n|\n|\r/", $component['extra']['items']);
       $component['extra']['items'] = array();
@@ -237,6 +236,10 @@ function webform_service_parse_submission($webform, $submission) {
     'remote_addr' => !empty($submission->remote_addr) ? $submission->remote_addr : ip_address(),
     'is_draft' => 0,
     'data' => $data,
+    // Very old versions of Webform 4.x need this value, do NOT use it with the
+    // latest versions of Webform 4.x. Use at your own risk, if you happen to be
+    // stuck with an older version of Webform 4.x.
+    //'serial' => _webform_submission_serial_next_value($webform->nid)
   );
 
   // Add the submission ID if it is provided.
@@ -308,11 +311,13 @@ function webform_service_get_submission($webform, $submission) {
     // Load the user account.
     $account = user_load($submission->uid);
 
+    $submissionHasUuid = isset($submission->uuid);
+
     // The return for this submission.
     $return = array(
       'sid' => $submission->sid,
-      'uuid' => $submission->uuid,
-      'uri' => services_resource_uri(array('submission', $submission->uuid)),
+      'uuid' => $submissionHasUuid ? $submission->uuid : NULL,
+      'uri' => $submissionHasUuid ? services_resource_uri(array('submission', $submission->uuid)) : NULL,
       'webform' => services_resource_uri(array('webform', $webform->uuid)),
       'user' => $account->uuid,
       'submitted' => $submission->submitted,
