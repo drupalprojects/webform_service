@@ -263,7 +263,7 @@ function webform_service_parse_submission($webform, $submission) {
   }
 
   // Allow other modules to modify the submission.
-  drupal_alter('webform_service_submission', $submission_obj);
+  drupal_alter('webform_service_submission', $submission_obj, $submission);
 
   return $submission_obj;
 }
